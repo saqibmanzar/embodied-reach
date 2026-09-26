@@ -1,0 +1,36 @@
+<mujoco model="planar_2link_arm">
+    <compiler angle="degree" coordinate="local" inertiafromgeom="true"/>
+    <option gravity="0 0 -9.81" timestep="0.002"/>
+    <default>
+        <joint damping="0.1"/>
+    </default>
+    <worldbody>
+        <geom name="floor" type="plane" size="2 2 0.1" rgba="0.8 0.8 0.8 1"/>
+
+        <body name="target_mocap" mocap="true" pos="0.5 0.5 0.1">
+            <geom type="sphere" size="0.03" rgba="1 0 0 0.5" contype="0" conaffinity="0"/>
+            <site name="target" pos="0 0 0" size="0.01"/>
+        </body>
+
+        <body name="base" pos="0 0 0.1">
+            <geom name="base_cylinder" type="cylinder" size="0.05 0.01" rgba="0.2 0.2 0.2 1"/>
+
+            <body name="link1" pos="0 0 0.02">
+                <joint name="arm1" type="hinge" axis="0 0 1"/>
+                <geom name="link1_geom" type="capsule" fromto="0 0 0 0.5 0 0" size="0.025" rgba="0.2 0.4 0.8 1"/>
+
+                <body name="link2" pos="0.5 0 0.03">
+                    <joint name="arm2" type="hinge" axis="0 0 1"/>
+                    <geom name="link2_geom" type="capsule" fromto="0 0 0 0.5 0 0" size="0.025" rgba="0.4 0.2 0.8 1"/>
+                    <site name="ee" pos="0.5 0 0" size="0.03" rgba="1 0.8 0 1"/>
+                </body>
+            </body>
+        
+        </body>
+    </worldbody>
+
+    <actuator>
+        <motor name="motor1" joint="arm1" ctrlrange="-1 1" ctrllimited="true"/>
+        <motor name="motor2" joint="arm2" ctrlrange="-1 1" ctrllimited="true"/>
+    </actuator>
+</mujoco>

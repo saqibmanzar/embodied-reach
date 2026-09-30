@@ -37,6 +37,42 @@ The experiment compares the pseudo-inverse (\(\lambda = 0\)) against DLS (\(\lam
 
 ![DLS vs Pseudo-Inverse](results/dls_vs_pinv.png)
 
+### Day 3: Gymnasium Reaching Environment + MDP Formulation
+
+* Built a custom Gymnasium reaching environment around the MuJoCo 2-link arm.
+* Defined a 6-dimensional physical task state consisting of joint positions, joint velocities, and target position.
+* Defined a 10-dimensional observation containing joint angles represented using sine/cosine, joint velocities, target position, and end-effector-to-target displacement.
+* Defined continuous 2-dimensional motor actions in the range \([-1,1]\).
+* Implemented a distance-based reward with a small control penalty.
+* Added random target sampling and a 200-step episode horizon.
+* Validated the environment using Gymnasium's environment checker.
+* Ran a 100-episode random-policy baseline.
+* Implemented discounted return-to-go analysis for \(\gamma=0.9\) and \(\gamma=0.99\).
+
+#### MDP Formulation
+
+| Component       | Definition                                                                        |
+| --------------- | --------------------------------------------------------------------------------- |
+| **State**       | \(s=(q_1,q_2,\dot q_1,\dot q_2,x_t,y_t)\)                                         |
+| **Observation** | `[cos q1, cos q2, sin q1, sin q2, qdot1, qdot2, target_x, target_y, dx, dy]`      |
+| **Action**      | Continuous \(a_t\in[-1,1]^2\) applied to the two motors                           |
+| **Transition**  | MuJoCo physics, with 5 simulation steps per environment step                      |
+| **Reward**      | \(-\|x_{ee}-x_{target}\|_2 - 0.01\|a_t\|_2^2\)                                    |
+| **Termination** | No task termination; reaching the target is recorded through `info["is_success"]` |
+| **Truncation**  | Episode ends after 200 environment steps                                          |
+| **Discount**    | \(\gamma\in\{0.9,0.99\}\)                                                         |
+
+Under the simplified task definition, the physical state is Markov because the next state depends on the current state and action rather than the previous history.
+
+#### Random Policy Baseline
+
+100 episodes with randomly sampled actions:
+
+* **Success rate:** 1.0%
+* **Mean return:** -173.66 ± 79.49
+
+The random policy provides a baseline for evaluating the learned policies developed in later experiments.
+
 ## Planned Work
 
 * Implement REINFORCE from scratch.
@@ -51,9 +87,14 @@ The experiment compares the pseudo-inverse (\(\lambda = 0\)) against DLS (\(\lam
 ```text
 embodied-reach/
 ├── envs/
-│   └── arm2.xml
+│   ├── arm2.xml
+│   └── reach_env.py
 ├── kinematics/
 ├── controllers/
+├── tests/
+│   └── test_env.py
+├── notebooks/
+│   └── returns.ipynb
 ├── results/
 │   └── dls_vs_pinv.png
 ├── test_arm.py
@@ -62,6 +103,6 @@ embodied-reach/
 
 ## Setup
 
-The project uses Python, NumPy, and MuJoCo and runs in a WSL2 Ubuntu environment.
+The project uses Python, NumPy, Gymnasium, and MuJoCo and runs in a WSL2 Ubuntu environment.
 
 More detailed setup instructions and experiment documentation will be added as the project develops.

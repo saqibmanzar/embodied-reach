@@ -73,9 +73,30 @@ Under the simplified task definition, the physical state is Markov because the n
 
 The random policy provides a baseline for evaluating the learned policies developed in later experiments.
 
+### Day 4: Policy Gradient + REINFORCE
+
+* Derived the policy-gradient objective from the log-derivative trick.
+* Derived the trajectory-level policy gradient using the fact that environment dynamics do not depend on policy parameters.
+* Derived the reward-to-go formulation.
+* Derived the Expected Grad-Log-Probability (EGLP) lemma and its use for action-independent baselines.
+* Implemented a Gaussian policy network in PyTorch with a 10-dimensional observation input and 2-dimensional continuous action output.
+* Verified the Gaussian log-probability calculation against the analytical expression with a unit test.
+* Implemented REINFORCE using discounted reward-to-go.
+* Trained the policy on the fixed-target reaching task across 3 random seeds.
+* Logged episode return, success rate, policy loss, and gradient norm.
+
+#### REINFORCE Experiment
+
+The initial REINFORCE experiment showed noisy learning across seeds rather than stable convergence.
+
+The 300-iteration runs produced transient improvements in episode return, but performance remained variable and success rates were low. This provides a baseline for the controlled variance-reduction experiment planned next.
+
+The purpose of this experiment was primarily to establish a working policy-gradient implementation and create a baseline for subsequent improvements, rather than to tune REINFORCE to convergence.
+
 ## Planned Work
 
-* Implement REINFORCE from scratch.
+* Evaluate variance reduction using action-independent baselines.
+* Implement Generalized Advantage Estimation (GAE).
 * Implement PPO from scratch.
 * Compare learned control against the classical DLS baseline.
 * Reproduce selected experiments from robot learning research.
@@ -91,18 +112,35 @@ embodied-reach/
 │   └── reach_env.py
 ├── kinematics/
 ├── controllers/
+├── rl/
+│   ├── policy.py
+│   └── reinforce.py
+├── derivations/
+│   └── pg.md
 ├── tests/
-│   └── test_env.py
+│   ├── test_env.py
+│   └── test_policy.py
 ├── notebooks/
 │   └── returns.ipynb
 ├── results/
 │   └── dls_vs_pinv.png
-├── test_arm.py
 └── README.md
 ```
 
 ## Setup
 
-The project uses Python, NumPy, Gymnasium, and MuJoCo and runs in a WSL2 Ubuntu environment.
+The project uses Python, NumPy, Gymnasium, PyTorch, and MuJoCo and runs in a WSL2 Ubuntu environment.
 
 More detailed setup instructions and experiment documentation will be added as the project develops.
+
+````
+
+**One thing I'd change from your original README in particular:** don't say simply *“Implement REINFORCE from scratch”* under Planned Work anymore. It's done. Replace it with the baseline/GAE/PPO sequence.
+
+Then commit it as something like:
+
+```text
+docs: document Day 4 REINFORCE baseline
+````
+
+And **yes, push Day 4 even though the learning wasn't stable**. That's actually more credible than waiting until you tune it into a pretty curve.

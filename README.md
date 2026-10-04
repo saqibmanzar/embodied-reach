@@ -129,8 +129,7 @@ Derived the mathematical relationship connecting multi-step Temporal Difference 
 Formulated the **Generalized Advantage Estimation (GAE)** operator:
 
 $$
-\hat{A}_t
-=
+\hat{A}_t =
 \sum_{l=0}^{\infty}
 (\gamma\lambda)^l
 \delta_{t+l}^{V}
@@ -139,12 +138,9 @@ $$
 where the 1-step TD error is defined as:
 
 $$
-\delta_t^V
-=
-r_t
-+
-\gamma V(s_{t+1})
--
+\delta_t^V =
+r_t +
+\gamma V(s_{t+1}) -
 V(s_t)
 $$
 
@@ -159,8 +155,7 @@ $$
 * **$\lambda = 0$ (High Bias, Low Variance):** Reduces strictly to the 1-step TD advantage estimator:
 
 $$
-\hat{A}_t
-=
+\hat{A}_t =
 \delta_t^V
 $$
 
@@ -171,12 +166,9 @@ $$
 **Recursive Backward Loop:** Implemented GAE using its efficient backward recursive formulation:
 
 $$
-\hat{A}_t
-=
-\delta_t^V
-+
-\gamma\lambda
-(1-d_t)
+\hat{A}_t =
+\delta_t^V +
+\gamma\lambda(1-d_t)
 \hat{A}_{t+1}
 $$
 

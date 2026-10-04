@@ -2,3 +2,19 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Experiment / training outputs
+runs/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / IDE
+.vscode/
+.DS_Store

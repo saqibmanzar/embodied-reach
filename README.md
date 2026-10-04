@@ -93,12 +93,81 @@ The 300-iteration runs produced transient improvements in episode return, but pe
 
 The purpose of this experiment was primarily to establish a working policy-gradient implementation and create a baseline for subsequent improvements, rather than to tune REINFORCE to convergence.
 
+### Day 5: REINFORCE Variance Reduction with Batch Baseline
+
+* Added an action-independent batch baseline to the REINFORCE estimator.
+* Compared REINFORCE with and without the baseline using the same training configuration.
+* Evaluated both variants across 3 random seeds.
+* Tracked episode return, success rate, policy loss, gradient norm, and observed gradient-norm variance.
+
+#### Controlled Variance-Reduction Experiment
+
+The experiment compared:
+
+$$
+A_t = G_t
+$$
+
+against the batch-baseline estimator:
+
+$$
+A_t = G_t - \frac{1}{N}\sum_i G_i
+$$
+
+The baseline is action-independent and therefore does not change the expected policy gradient.
+
+Across all three seeds, the batch baseline produced substantially lower observed variance in the gradient norm over training iterations. However, episode returns remained noisy and success rates remained low.
+
+**Conclusion:** The experiment supports the variance-reduction hypothesis for the measured gradient norm, but does not establish improved learning performance.
+
+### Day 7: Generalized Advantage Estimation
+
+* Derived the relationship between multi-step TD errors and Monte Carlo advantage estimates.
+* Derived the GAE estimator:
+
+$$
+\hat A_t^{GAE}
+=
+\sum_{l=0}^{\infty}
+(\gamma\lambda)^l\delta_{t+l}
+$$
+
+where:
+
+$$
+\delta_t =
+r_t+\gamma V(s_{t+1})-V(s_t)
+$$
+
+* Implemented GAE using its recursive formulation:
+
+$$
+\hat A_t
+=
+\delta_t+
+\gamma\lambda(1-d_t)\hat A_{t+1}
+$$
+
+* Implemented bootstrapping from the value estimate at the end of a rollout.
+* Added handling for terminal transitions to prevent advantage estimates from propagating across episode boundaries.
+* Added hand-calculated unit tests covering TD errors, terminal masking, and the GAE recursion.
+
+GAE provides a controllable tradeoff between short-horizon TD estimates and long-horizon Monte Carlo estimates through the hyperparameter \(\lambda\).
+
+At \(\lambda=0\), GAE reduces to the 1-step TD error:
+
+$$
+\hat A_t=\delta_t
+$$
+
+As \(\lambda\) approaches 1, the estimator incorporates increasingly long-horizon information and approaches the Monte Carlo advantage estimate.
+
+
 ## Planned Work
 
-* Evaluate variance reduction using action-independent baselines.
-* Implement Generalized Advantage Estimation (GAE).
-* Implement PPO from scratch.
-* Compare learned control against the classical DLS baseline.
+* Implement Proximal Policy Optimization (PPO) from scratch.
+* Compare the PPO policy against the classical DLS controller.
+* Validate the implementation against a reference PPO implementation.
 * Reproduce selected experiments from robot learning research.
 * Explore imitation learning and Action Chunking with Transformers (ACT).
 * Integrate learned policies with a robotics stack.

@@ -23,7 +23,7 @@ def compute_loss(log_prob: torch.Tensor, return_to_go: torch.Tensor):
     return -(log_prob * return_to_go).mean()
 
 
-def collect_batch(env, policy, num_episodes: int = 16, gamma: float = 0.99):
+def collect_batch(env, policy, baseline, num_episodes: int = 16, gamma: float = 0.99):
     batch_log_probs = []
     batch_returns = []
     episode_returns = []
@@ -64,7 +64,8 @@ def collect_batch(env, policy, num_episodes: int = 16, gamma: float = 0.99):
     batch_returns = torch.cat(batch_returns)
 
     # Return normalization for batch gradient stability
-    batch_returns = (batch_returns - batch_returns.mean()) / (batch_returns.std() + 1e-8)
+    if baseline:
+        batch_returns = batch_returns - batch_returns.mean()
 
     avg_return = np.mean(episode_returns)
     success_rate = np.mean(episode_successes)
@@ -72,7 +73,7 @@ def collect_batch(env, policy, num_episodes: int = 16, gamma: float = 0.99):
     return batch_log_probs, batch_returns, avg_return, success_rate
 
 
-def train_seed(seed: int, num_iterations: int = 300, num_episodes: int = 16, gamma: float = 0.99):
+def train_seed(seed: int, exp_name: str, num_iterations: int = 300, baseline: bool = False, num_episodes: int = 16, gamma: float = 0.99):
     # Set seeds for reproducibility
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -84,13 +85,15 @@ def train_seed(seed: int, num_iterations: int = 300, num_episodes: int = 16, gam
     policy = GaussianPolicy(obs_dim=obs_dim, act_dim=act_dim)
     optimizer = torch.optim.Adam(policy.parameters(), lr=3e-4)
 
-    writer = SummaryWriter(log_dir=f"runs/reinforce_seed_{seed}")
+    writer = SummaryWriter(log_dir=f"runs/{exp_name}_seed_{seed}")
 
     print(f"\n=== Starting Training for Seed {seed} ===")
 
+    grad_norm_batch = []
+
     for iteration in range(1, num_iterations + 1):
         batch_log_probs, batch_returns, avg_return, success_rate = collect_batch(
-            env, policy, num_episodes=num_episodes, gamma=gamma
+            env, policy, baseline, num_episodes=num_episodes, gamma=gamma
         )
 
         loss = compute_loss(batch_log_probs, batch_returns)
@@ -100,6 +103,8 @@ def train_seed(seed: int, num_iterations: int = 300, num_episodes: int = 16, gam
 
         # Compute gradient norm
         grad_norm = torch.nn.utils.clip_grad_norm_(policy.parameters(), max_norm=1.0)
+        grad_norm_batch.append(grad_norm.item())
+        grad_norm_var = np.var(grad_norm_batch) if len(grad_norm_batch) > 1 else 0.0
 
         optimizer.step()
 
@@ -107,22 +112,33 @@ def train_seed(seed: int, num_iterations: int = 300, num_episodes: int = 16, gam
         writer.add_scalar("Train/AverageReturn", avg_return, iteration)
         writer.add_scalar("Train/SuccessRate", success_rate, iteration)
         writer.add_scalar("Train/GradNorm", grad_norm.item(), iteration)
+        writer.add_scalar("Train/GradNormVar", grad_norm_var, iteration)
         writer.add_scalar("Train/Loss", loss.item(), iteration)
 
         if iteration % 20 == 0 or iteration == 1:
             print(
                 f"Seed {seed:2d} | Iter {iteration:3d}/{num_iterations} | "
                 f"Avg Return: {avg_return:7.2f} | Success Rate: {success_rate * 100:5.1f}% | "
-                f"Grad Norm: {grad_norm.item():.4f}"
+                f"Grad Norm: {grad_norm.item():.4f} | "
+                f"Grad Norm: {grad_norm.item():.4f} | Grad Var: {grad_norm_var:.6f}"
             )
 
     writer.close()
 
 
+
 def main():
     seeds = [42, 43, 44]
+
+    # EXP-001: Standard REINFORCE (No baseline)
+    print("\n=== EXP-001: REINFORCE (No Baseline) ===")
     for seed in seeds:
-        train_seed(seed)
+        train_seed(seed, exp_name="exp001_nobaseline", baseline=False)
+
+    # EXP-002: REINFORCE with Batch Mean Baseline
+    print("\n=== EXP-002: REINFORCE (Batch Baseline) ===")
+    for seed in seeds:
+        train_seed(seed, exp_name="exp002_baseline", baseline=True)
 
 
 if __name__ == "__main__":

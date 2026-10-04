@@ -120,48 +120,37 @@ Across all three seeds, the batch baseline produced substantially lower observed
 
 **Conclusion:** The experiment supports the variance-reduction hypothesis for the measured gradient norm, but does not establish improved learning performance.
 
-### Day 7: Generalized Advantage Estimation
+## Day 7: Generalized Advantage Estimation (GAE)
 
-* Derived the relationship between multi-step TD errors and Monte Carlo advantage estimates.
-* Derived the GAE estimator:
+### Theoretical Foundations
+* Derived the mathematical relationship connecting multi-step Temporal Difference (TD) errors to full Monte Carlo advantage estimates.
+* Formulated the Generalized Advantage Estimation (GAE) operator:
+  $$\hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma\lambda)^l \delta_{t+l}^{V}$$
+  where the 1-step TD error is defined as:
+  $$\delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)$$
 
-$$
-\hat A_t^{GAE}
-=
-\sum_{l=0}^{\infty}
-(\gamma\lambda)^l\delta_{t+l}
-$$
+---
 
-where:
+### Key Theoretical Insights
+GAE provides a controllable mechanism to navigate the **bias-variance tradeoff** in RL via the hyperparameter $\lambda \in [0, 1]$:
+* **$\lambda = 0$ (High Bias, Low Variance):** Reduces strictly to the 1-step TD advantage estimator:
+  $$\hat{A}_t = \delta_t^V$$
+* **$\lambda \to 1$ (Low Bias, High Variance):** Incorporates increasingly long-horizon trajectory information, approaching the full Monte Carlo advantage estimate.
 
-$$
-\delta_t =
-r_t+\gamma V(s_{t+1})-V(s_t)
-$$
+---
 
-* Implemented GAE using its recursive formulation:
+### Core Implementation Highlights (`rl/gae.py`)
+* **Recursive Backward Loop:** Implemented GAE using its efficient backward recursive formulation:
+  $$\hat{A}_t = \delta_t + \gamma\lambda (1 - d_t) \hat{A}_{t+1}$$
+* **Episode Boundary Masking:** Vectorized terminal gating using $(1 - d_t)$ to strictly prevent reward and advantage leakage across episode terminations.
+* **Rollout Bootstrapping:** Handled trajectory truncation at time horizon $T$ by bootstrapping off the critic network's value estimate $V(s_T)$ (`last_value`).
+* **Hardware & Shape Agnostic:** Supports multi-environment vectorization (`[T, N]` shapes) on CPU, CUDA GPU, or MPS.
 
-$$
-\hat A_t
-=
-\delta_t+
-\gamma\lambda(1-d_t)\hat A_{t+1}
-$$
+---
 
-* Implemented bootstrapping from the value estimate at the end of a rollout.
-* Added handling for terminal transitions to prevent advantage estimates from propagating across episode boundaries.
-* Added hand-calculated unit tests covering TD errors, terminal masking, and the GAE recursion.
-
-GAE provides a controllable tradeoff between short-horizon TD estimates and long-horizon Monte Carlo estimates through the hyperparameter \(\lambda\).
-
-At \(\lambda=0\), GAE reduces to the 1-step TD error:
-
-$$
-\hat A_t=\delta_t
-$$
-
-As \(\lambda\) approaches 1, the estimator incorporates increasingly long-horizon information and approaches the Monte Carlo advantage estimate.
-
+### Verification & Testing (`tests/test_gae.py`)
+* Built deterministic 3-step hand-calculated test cases to verify numerical precision.
+* Validated TD error computations, terminal masking behavior, and GAE recursive accumulation against `pytest`.
 
 ## Planned Work
 

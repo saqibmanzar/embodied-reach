@@ -129,7 +129,7 @@ Derived the mathematical relationship connecting multi-step Temporal Difference 
 Formulated the **Generalized Advantage Estimation (GAE)** operator:
 
 $$
-\hat{A}_t^{\mathrm{GAE}(\gamma,\lambda)}
+\hat{A}_t
 =
 \sum_{l=0}^{\infty}
 (\gamma\lambda)^l
@@ -150,7 +150,7 @@ $$
 
 ### Key Theoretical Insights
 
-GAE provides a controllable mechanism to navigate the **bias-variance tradeoff** in reinforcement learning through the hyperparameter
+GAE provides a controllable mechanism to navigate the **bias-variance tradeoff** in reinforcement learning through the hyperparameter:
 
 $$
 \lambda \in [0,1]
@@ -173,14 +173,14 @@ $$
 $$
 \hat{A}_t
 =
-\delta_t
+\delta_t^V
 +
 \gamma\lambda
 (1-d_t)
 \hat{A}_{t+1}
 $$
 
-**Episode Boundary Masking:** Vectorized terminal gating using
+**Episode Boundary Masking:** Vectorized terminal gating using:
 
 $$
 (1-d_t)

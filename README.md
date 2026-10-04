@@ -123,34 +123,87 @@ Across all three seeds, the batch baseline produced substantially lower observed
 ## Day 7: Generalized Advantage Estimation (GAE)
 
 ### Theoretical Foundations
-* Derived the mathematical relationship connecting multi-step Temporal Difference (TD) errors to full Monte Carlo advantage estimates.
-* Formulated the Generalized Advantage Estimation (GAE) operator:
-  $$\hat{A}_t^{\text{GAE}(\gamma, \lambda)} = \sum_{l=0}^{\infty} (\gamma\lambda)^l \delta_{t+l}^{V}$$
-  where the 1-step TD error is defined as:
-  $$\delta_t^V = r_t + \gamma V(s_{t+1}) - V(s_t)$$
 
----
+Derived the mathematical relationship connecting multi-step Temporal Difference (TD) errors to full Monte Carlo advantage estimates.
+
+Formulated the **Generalized Advantage Estimation (GAE)** operator:
+
+$$
+\hat{A}_t^{\mathrm{GAE}(\gamma,\lambda)}
+=
+\sum_{l=0}^{\infty}
+(\gamma\lambda)^l
+\delta_{t+l}^{V}
+$$
+
+where the 1-step TD error is defined as:
+
+$$
+\delta_t^V
+=
+r_t
++
+\gamma V(s_{t+1})
+-
+V(s_t)
+$$
 
 ### Key Theoretical Insights
-GAE provides a controllable mechanism to navigate the **bias-variance tradeoff** in RL via the hyperparameter $\lambda \in [0, 1]$:
-* **$\lambda = 0$ (High Bias, Low Variance):** Reduces strictly to the 1-step TD advantage estimator:
-  $$\hat{A}_t = \delta_t^V$$
-* **$\lambda \to 1$ (Low Bias, High Variance):** Incorporates increasingly long-horizon trajectory information, approaching the full Monte Carlo advantage estimate.
 
----
+GAE provides a controllable mechanism to navigate the **bias-variance tradeoff** in reinforcement learning through the hyperparameter
+
+$$
+\lambda \in [0,1]
+$$
+
+* **$\lambda = 0$ (High Bias, Low Variance):** Reduces strictly to the 1-step TD advantage estimator:
+
+$$
+\hat{A}_t
+=
+\delta_t^V
+$$
+
+* **$\lambda \rightarrow 1$ (Low Bias, High Variance):** Incorporates increasingly long-horizon trajectory information, approaching the full Monte Carlo advantage estimate.
 
 ### Core Implementation Highlights (`rl/gae.py`)
-* **Recursive Backward Loop:** Implemented GAE using its efficient backward recursive formulation:
-  $$\hat{A}_t = \delta_t + \gamma\lambda (1 - d_t) \hat{A}_{t+1}$$
-* **Episode Boundary Masking:** Vectorized terminal gating using $(1 - d_t)$ to strictly prevent reward and advantage leakage across episode terminations.
-* **Rollout Bootstrapping:** Handled trajectory truncation at time horizon $T$ by bootstrapping off the critic network's value estimate $V(s_T)$ (`last_value`).
-* **Hardware & Shape Agnostic:** Supports multi-environment vectorization (`[T, N]` shapes) on CPU, CUDA GPU, or MPS.
 
----
+**Recursive Backward Loop:** Implemented GAE using its efficient backward recursive formulation:
+
+$$
+\hat{A}_t
+=
+\delta_t
++
+\gamma\lambda
+(1-d_t)
+\hat{A}_{t+1}
+$$
+
+**Episode Boundary Masking:** Vectorized terminal gating using
+
+$$
+(1-d_t)
+$$
+
+to strictly prevent reward and advantage leakage across episode terminations.
+
+**Rollout Bootstrapping:** Handled trajectory truncation at time horizon $T$ by bootstrapping off the critic network's value estimate $V(s_T)$ (`last_value`).
+
+**Hardware & Shape Agnostic:** Supports multi-environment vectorization with $[T,N]$ tensor shapes on CPU, CUDA GPU, or MPS.
 
 ### Verification & Testing (`tests/test_gae.py`)
-* Built deterministic 3-step hand-calculated test cases to verify numerical precision.
-* Validated TD error computations, terminal masking behavior, and GAE recursive accumulation against `pytest`.
+
+Built deterministic 3-step hand-calculated test cases to verify numerical precision.
+
+Validated:
+
+* TD error computations
+* Terminal masking behavior
+* GAE recursive accumulation
+
+All validated against `pytest`.
+
 
 ## Planned Work
 
